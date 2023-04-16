@@ -65,7 +65,7 @@ plt.ylim([-0.5, 1.5])
 plt.title('OR Gate',fontweight='bold')
 plt.show()
 ---------------------------------------------------
-# OR gate perceptron
+# XOR gate perceptron
 import numpy as np
 import matplotlib.pyplot as plt
 
