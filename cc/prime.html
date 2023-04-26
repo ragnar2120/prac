@@ -1,0 +1,40 @@
+<html>
+	<head>
+		<title>PRIME</title>
+		<script>
+			function range(){
+				var str=document.f1.str.value;
+				var end=document.f1.end.value;
+				document.write("The prime numbers in the given range are :");
+				for(i=str;i<end;i++){
+					prime(i);
+					}
+					}
+			function prime(i){
+				var a ;
+				a=parseInt(i);
+				var b=parseInt(a/2)
+				if(a==2){document.write(a +"\n");}
+				else{
+				for(i=2;i<b;i++){
+				if (a==1){continue;}
+					if(a%i==0){
+					break;
+						}
+					else{continue;}
+					}
+					if(a%i!=0 && a!=1){document.write(a+"\n");}
+				}
+				}
+		</script>
+	</head>
+	<body>
+		<form name="f1">
+			Enter start:
+			<input type="text" name="str">
+			Enter End:
+			<input type="text" name="end">
+			<input type="button" onclick="range()" value="Click to Display"></input>
+		</form>
+	</body>
+</html>		 

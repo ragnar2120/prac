@@ -1,0 +1,27 @@
+<html>
+	<head>
+		<title>FIBONACCI</title>
+		<script>
+			function fibo(){
+			var tm=prompt("Enter the no of terms : ");
+			var s1=prompt("Enter the first term : ");
+			var s2=prompt("Enter the second term : ");
+			parseInt(tm);
+			s1=parseInt(s1);
+			s2=parseInt(s2);
+		
+			document.write("The Fibonacci Terms  are :");
+				for(i=0;i<tm;i++){
+					document.write(s1+"\t");
+					var temp=s1;
+					s1=s2;
+					s2=s2+temp;
+					}
+				}
+		</script>
+	</head>
+	<body>
+			<input type="button" onclick="fibo()" value="Click To Enter The Terms"></input>
+		
+	</body>
+</html>
