@@ -1,0 +1,106 @@
+// Solidity program to demonstrate how to write a smart contract
+pragma solidity >= 0.4.16 < 0.7.0;
+
+contract Storage
+{
+
+    uint public setData;
+
+    function set(uint x) public
+    {
+        setData = x;
+    }
+   
+    function get(
+    ) public view returns (uint) {
+        return setData;
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+pragma solidity 0.5.1;
+
+
+contract MyContract {
+    Person[] public people;
+    uint256 public peopleCount;
+
+
+    struct Person {
+        string _firstName;
+        string _lastName;
+
+
+    }
+
+
+    function addPerson(string memory _firstName, string memory _lastName) public {
+        people.push(Person(_firstName, _lastName));
+        peopleCount +=1;
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+pragma solidity 0.5.1;
+
+
+contract MyContract {
+    uint public peopleCount = 0;
+    mapping(uint => Person) public people;
+
+
+    struct Person {
+        uint _id;
+        string _firstName;
+        string _lastName;
+    }
+
+
+    function addPerson(string memory _firstName, string memory _lastName) public {
+        incrementCount();
+        people[peopleCount] = Person(peopleCount, _firstName, _lastName);
+    }
+
+
+    function incrementCount() internal {
+        peopleCount +=1;
+    }
+}
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+pragma solidity 0.5.1;
+
+
+contract MyContract {
+    uint public peopleCount = 0;
+    address public owner;
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    mapping(uint => Person) public people;
+    constructor() public{
+        owner = msg.sender;
+    }
+    struct Person{
+        uint _id;
+        string _firstName;
+        string _lastName;
+    }
+    function addPerson(string memory _firstName, string memory _lastName) public {
+        incrementCount();
+        people[peopleCount] = Person(peopleCount, _firstName, _lastName);
+    }
+    function incrementCount() internal {
+        peopleCount +=1;
+    }
+}
+
