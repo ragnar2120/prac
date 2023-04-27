@@ -1,0 +1,773 @@
+------------------------------------------------------------------------------
+Pract 1
+------------------------------------------------------------------------------
+ 
+def prediction(row,weights): 
+  activation=weights[0] 
+  for i in range(len(row)-1): 
+    activation += weights[i+1]*row[i] 
+  return 1.0 if activation >=0.0 else 0.0 
+ 
+ 
+def train_weights(data,lrate,epoch): 
+  weights=[0.0 for i in range(len(data[0]))] 
+  for epoch in range(epoch): 
+    sum_error=0 
+    for row in data: 
+      pred=prediction(row,weights) 
+      error= row[-1] - pred 
+      sum_error += error**2 
+      weights[0]+= lrate *error 
+      for i in range(len(row)-1): 
+        weights[i+1] += (lrate * error * row[i]) 
+    print('>epoch = %d , lrate = % 3.f, error = %.3f'%(epoch,lrate,sum_error)) 
+    print(weights) 
+  return(weights) 
+
+#AND gate 
+data=[[0,0,0],[0,1,0],[1,0,0],[1,1,1]] 
+lrate=0.1 
+epoch=5 
+weights=train_weights(data,lrate,epoch) 
+print(weights) 
+ 
+ 
+ 
+ 
+for rows in data: 
+  pred=prediction(rows,weights) 
+  print("Expected : %d ,  Predicted : %d" % (rows[-1], pred)) 
+ 
+ 
+#OR gate 
+data=[[0,0,0],[0,1,1],[1,0,1],[1,1,1]] 
+lrate=0.1 
+epoch=5 
+weights=train_weights(data,lrate,epoch) 
+print(weights) 
+ 
+ 
+ 
+for rows in data: 
+  pred=prediction(rows,weights) 
+  print("Expected : %d ,  Predicted : %d" % (rows[-1], pred)) 
+
+------------------------------------------------------------------------------
+Pract 2
+------------------------------------------------------------------------------
+
+def prediction(row,weights): 
+  activation=weights[0] 
+  for i in range(len(row)-1): 
+    activation += weights[i+1]*row[i] 
+  return 1.0 if activation >=0.0 else 0.0 
+ 
+
+
+def train_weights(data,lrate,epoch): 
+  weights=[0.0 for i in range(len(data[0]))] 
+  for epoch in range(epoch): 
+    sum_error=0 
+    for row in data: 
+      pred=prediction(row,weights) 
+      error= row[-1] - pred 
+      sum_error += error**2 
+      weights[0]+= lrate *error 
+      for i in range(len(row)-1): 
+        weights[i+1] += (lrate * error * row[i]) 
+    print('>epoch = %d , lrate = % 3.f, error = %.3f'%(epoch,lrate,sum_error)) 
+    print(weights) 
+  return(weights) 
+ 
+
+data=[ 
+[0, 0, 0, 0 ], 
+[0, 0, 1, 1 ], 
+[0, 1, 0, 0 ], 
+[0, 1, 1 ,1 ], 
+[1, 0, 0, 0 ], 
+[1, 0, 1, 1 ], 
+[1, 1, 0, 0 ], 
+[1, 1, 1 ,1 ] 
+      ] 
+
+
+lrate=0.1 
+epoch=20 
+weights=train_weights(data,lrate,epoch) 
+print(weights) 
+ 
+ 
+for rows in data: 
+  pred=prediction(rows,weights) 
+  print("Expected : %d ,  Predicted : %d" % (rows[-1], pred)) 
+ 
+ 
+------------------------------------------------------------------------------
+Pract 3
+------------------------------------------------------------------------------
+
+from random import seed 
+from random import random 
+from math import exp 
+def initialize_network(n_inp,n_hid,n_out): 
+  network =list() 
+  hid_layer=[{'weights' : [random() for i in range(n_inp + 1)]} for i in range(n_hid)] 
+  network.append(hid_layer) 
+  out_layer=[{'weights' : [random() for i in range(n_hid + 1)]} for i in range(n_out)] 
+  network.append(out_layer) 
+  return network 
+#forward prop 
+def activate(weights,inputs): 
+  activation=weights[-1] 
+  for i in range(len(weights)-1): 
+    activation += weights[i]*inputs[i] 
+  return activation 
+def transfer(activation): 
+  return 1.0 / (1.0 + exp(-activation)) 
+def forward_propogate( network , row ): 
+  inputs = row 
+  for layer in network: 
+    new_inputs = [] 
+    for neuron in layer : 
+      activation =activate(neuron['weights'], inputs) 
+      neuron ['output'] =transfer(activation) 
+      new_inputs.append(neuron['output']) 
+    inputs = new_inputs 
+  return inputs 
+def transfer_derivative(output): 
+  return output *(1.0 - output) 
+def backward_propagate_error(network, expected): 
+    for i in reversed(range(len(network))): 
+        layer = network[i] 
+        errors = list() 
+        if i != len(network)-1: 
+            for j in range(len(layer)): 
+                error = 0.0 
+                for neuron in network[i + 1]: 
+                    error += (neuron['weights'][j] * neuron['delta']) 
+                errors.append(error) 
+        else: 
+            for j in range(len(layer)): 
+                neuron = layer[j] 
+                errors.append(neuron['output'] - expected[j]) 
+        for j in range(len(layer)): 
+            neuron = layer[j] 
+            neuron['delta'] = errors[j] * transfer_derivative(neuron['output']) 
+def update_weights(network, row, l_rate): 
+    for i in range(len(network)): 
+        inputs = row[:-1] 
+        if i != 0: 
+            inputs = [neuron['output'] for neuron in network[i - 1]] 
+        for neuron in network[i]: 
+            for j in range(len(inputs)): 
+                neuron['weights'][j] -= l_rate * neuron['delta'] * inputs[j] 
+            neuron['weights'][-1] -= l_rate * neuron['delta'] 
+def train_network(network, train, l_rate, n_epoch, n_outputs): 
+    for epoch in range(n_epoch): 
+        sum_error = 0 
+        for row in train: 
+            outputs = forward_propogate(network, row) 
+            expected = [0 for i in range(n_outputs)] 
+            expected[row[-1]] = 1 
+            sum_error += sum([(expected[i]-outputs[i])**2 for i in range(len(expected))]) 
+            backward_propagate_error(network, expected) 
+            update_weights(network, row, l_rate) 
+        print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error)) 
+#xor 
+dataset = [[0,0,0], 
+ [0,1,1], 
+ [1,0,1], 
+ [1,1,0] 
+ ] 
+n_inputs = len(dataset[0]) - 1 
+n_outputs = len(set([row[-1] for row in dataset])) 
+network = initialize_network(n_inputs, 2, n_outputs) 
+train_network(network, dataset, 0.4, 2000, n_outputs) 
+for layer in network: 
+  print(layer) 
+ 
+
+def predict(network, row): 
+    outputs = forward_propogate(network, row) 
+    return outputs.index(max(outputs)) 
+ 
+ 
+for row in dataset: 
+    prediction = predict(network, row) 
+    print('Expected=%d, Got=%d' % (row[-1], prediction)) 
+ 
+ 
+------------------------------------------------------------------------------
+Pract 5
+------------------------------------------------------------------------------
+
+import numpy as np
+
+# Load MNIST data
+from tensorflow.keras.datasets import mnist
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+# Normalize and flatten input data
+X_train = X_train.reshape(X_train.shape[0], -1) / 255.0
+X_test = X_test.reshape(X_test.shape[0], -1) / 255.0
+
+# One-hot encode output labels
+y_train = np.eye(10)[y_train]
+y_test = np.eye(10)[y_test]
+
+# Define neural network architecture
+input_size = X_train.shape[1]
+hidden_size = 32
+output_size = 10
+
+# Initialize weights randomly
+W1 = np.random.randn(input_size, hidden_size)
+b1 = np.zeros(hidden_size)
+W2 = np.random.randn(hidden_size, output_size)
+b2 = np.zeros(output_size)
+
+# Define activation function (sigmoid)
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Define derivative of activation function (sigmoid)
+def sigmoid_derivative(x):
+    return sigmoid(x) * (1 - sigmoid(x))
+
+# Define forward propagation function
+def forward_propagation(X, W1, b1, W2, b2):
+    Z1 = np.dot(X, W1) + b1
+    A1 = sigmoid(Z1)
+    Z2 = np.dot(A1, W2) + b2
+    A2 = sigmoid(Z2)
+    return A1, A2
+
+# Define backward propagation function
+def backward_propagation(X, y, A1, A2, W1, W2):
+    dZ2 = A2 - y
+    dW2 = np.dot(A1.T, dZ2)
+    db2 = np.sum(dZ2, axis=0)
+    dZ1 = np.dot(dZ2, W2.T) * sigmoid_derivative(A1)
+    dW1 = np.dot(X.T, dZ1)
+    db1 = np.sum(dZ1, axis=0)
+    return dW1, db1, dW2, db2
+
+# Define training loop
+num_epochs = 10
+learning_rate = 0.1
+batch_size = 64
+num_batches = X_train.shape[0] // batch_size
+
+for epoch in range(num_epochs):
+    for i in range(num_batches):
+        # Select a random batch of samples
+        batch_indices = np.random.choice(X_train.shape[0], batch_size)
+        X_batch = X_train[batch_indices]
+        y_batch = y_train[batch_indices]
+        
+        # Forward propagation
+        A1, A2 = forward_propagation(X_batch, W1, b1, W2, b2)
+        
+        # Backward propagation
+        dW1, db1, dW2, db2 = backward_propagation(X_batch, y_batch, A1, A2, W1, W2)
+        
+        # Update weights and biases
+        W1 -= learning_rate * dW1
+        b1 -= learning_rate * db1
+        W2 -= learning_rate * dW2
+        b2 -= learning_rate * db2
+        
+    # Evaluate performance on test set
+    A1_test, A2_test = forward_propagation(X_test, W1, b1, W2, b2)
+    accuracy = np.mean(np.argmax(A2_test, axis=1) == np.argmax(y_test, axis=1))
+    print(f"Epoch {epoch}: Test accuracy = {accuracy}")
+
+# Commented out IPython magic to ensure Python compatibility.
+import matplotlib.pyplot as plt
+# %matplotlib inline
+# Create the subplots
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+sample =6567
+image = X_train[sample]
+#Plot the data on the subplot
+ax1.imshow(image.reshape(28,28))
+ax1.set_title('xD')
+sample =45
+image = X_train[sample]
+ax2.imshow(image.reshape(28,28))
+ax2.set_title('')
+
+plt.show()
+
+------------------------------------------------------------------------------
+Pract 6
+------------------------------------------------------------------------------
+
+import numpy as np 
+import matplotlib.pyplot as plt 
+ 
+ 
+def gaussian_rbf(x, landmark, gamma=1): 
+    return np.exp(-gamma * np.linalg.norm(x - landmark)**2) 
+ 
+ 
+def end_to_end(X1, X2, ys, mu1, mu2): 
+    from_1 = [gaussian_rbf(i, mu1) for i in zip(X1, X2)] 
+    from_2 = [gaussian_rbf(i, mu2) for i in zip(X1, X2)] 
+    # plot 
+     
+    plt.figure(figsize=(13, 5)) 
+    plt.subplot(1, 2, 1) 
+    plt.scatter((x1[0], x1[3]), (x2[0], x2[3]), label="Class_0") 
+    plt.scatter((x1[1], x1[2]), (x2[1], x2[2]), label="Class_1") 
+    plt.xlabel("$X1$", fontsize=15) 
+    plt.ylabel("$X2$", fontsize=15) 
+    plt.title("Xor: Linearly Inseparable", fontsize=15) 
+    plt.legend() 
+ 
+ 
+    plt.subplot(1, 2, 2) 
+    plt.scatter(from_1[0], from_2[0], label="Class_0") 
+    plt.scatter(from_1[1], from_2[1], label="Class_1") 
+    plt.scatter(from_1[2], from_2[2], label="Class_1") 
+    plt.scatter(from_1[3], from_2[3], label="Class_0") 
+    plt.plot([0, 0.95], [0.95, 0], "k--") 
+    plt.annotate("Seperating hyperplane", xy=(0.4, 0.55), xytext=(0.55, 0.66), 
+                arrowprops=dict(facecolor='black', shrink=0.05)) 
+    plt.xlabel(f"$mu1$: {(mu1)}", fontsize=15) 
+    plt.ylabel(f"$mu2$: {(mu2)}", fontsize=15) 
+    plt.title("Transformed Inputs: Linearly Seperable", fontsize=15) 
+    plt.legend() 
+ 
+ 
+    # solving problem using matrices form 
+    # AW = Y 
+    A = [] 
+ 
+ 
+    for i, j in zip(from_1, from_2): 
+        temp = [] 
+        temp.append(i) 
+        temp.append(j) 
+        temp.append(1) 
+        A.append(temp) 
+     
+    A = np.array(A) 
+    W = np.linalg.inv(A.T.dot(A)).dot(A.T).dot(ys) 
+    print(np.round(A.dot(W))) 
+    print(ys) 
+    print(f"Weights: {W}") 
+    return W 
+ 
+ 
+def predict_matrix(point, weights): 
+    gaussian_rbf_0 = gaussian_rbf(np.array(point), mu1) 
+    gaussian_rbf_1 = gaussian_rbf(np.array(point), mu2) 
+    A = np.array([gaussian_rbf_0, gaussian_rbf_1, 1]) 
+    return np.round(A.dot(weights)) 
+ 
+ 
+x1 = np.array([0, 0, 1, 1]) 
+x2 = np.array([0, 1, 0, 1]) 
+ys = np.array([0, 1, 1, 0]) 
+ 
+ 
+# centers 
+mu1 = np.array([0, 1]) 
+mu2 = np.array([1, 0]) 
+ 
+ 
+w = end_to_end(x1, x2, ys, mu1, mu2) 
+ 
+ 
+# testing 
+ 
+ 
+print(f"Input:{np.array([0, 0])}, Predicted: {predict_matrix(np.array([0, 0]), w)}") 
+print(f"Input:{np.array([0, 1])}, Predicted: {predict_matrix(np.array([0, 1]), w)}") 
+print(f"Input:{np.array([1, 0])}, Predicted: {predict_matrix(np.array([1, 0]), w)}") 
+print(f"Input:{np.array([1, 1])}, Predicted: {predict_matrix(np.array([1, 1]), w)}") 
+ 
+ 
+ 
+# centers 
+mu1 = np.array([0, 0]) 
+mu2 = np.array([1, 1]) 
+ 
+ 
+w = end_to_end(x1, x2, ys, mu1, mu2) 
+ 
+ 
+# testing 
+ 
+ 
+print(f"Input:{np.array([0, 0])}, Predicted: {predict_matrix(np.array([0, 0]), w)}") 
+print(f"Input:{np.array([0, 1])}, Predicted: {predict_matrix(np.array([0, 1]), w)}") 
+print(f"Input:{np.array([1, 0])}, Predicted: {predict_matrix(np.array([1, 0]), w)}") 
+print(f"Input:{np.array([1, 1])}, Predicted: {predict_matrix(np.array([1, 1]), w)}") 
+ 
+------------------------------------------------------------------------------
+Pract 7
+------------------------------------------------------------------------------
+
+import numpy as np
+from sklearn.decomposition import PCA
+
+# Generate some sample data
+X = np.random.rand(100, 10)
+
+# Instantiate a PCA object with the desired number of components
+pca = PCA(n_components=3)
+
+# Fit the PCA object to the data and transform the data
+X_pca = pca.fit_transform(X)
+
+# The transformed data now has reduced dimensions
+print(X_pca.shape)
+
+# not direct
+import numpy as np
+import matplotlib.pyplot as plt
+
+# random data
+X = np.random.rand(50, 2)
+
+# plot the original data
+plt.scatter(X[:, 0], X[:, 1], c='blue')
+plt.title('Original Data')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.show()
+
+# get mean of the data
+mean = np.mean(X, axis=0)
+
+# centering the data by subtracting the mean
+X_centered = X - mean
+
+# the covariance matrix of the centered data
+covariance_matrix = np.cov(X_centered.T)
+
+# eigenvalues and eigenvectors of the covariance matrix
+eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+# sort the eigenvectors in descending order of their corresponding eigenvalues
+eigenvectors_sorted = eigenvectors[:, np.argsort(eigenvalues)[::-1]]
+
+# choose the top k eigenvectors based on the desired number of components
+k = 1
+top_k_eigenvectors = eigenvectors_sorted[:, :k]
+
+# transform the centered data using the top k eigenvectors
+X_transformed = np.dot(X_centered, top_k_eigenvectors)
+
+# plot the transformed data
+plt.scatter(X_transformed[:, 0], np.zeros_like(X_transformed[:, 0]), c='red')
+plt.title('Transformed Data')
+plt.xlabel('PC 1')
+plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+
+# generate some sample data
+X = np.random.rand(200, 3)
+
+# plot the original data
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c='#d30085')
+ax.set_title('Original Data')
+ax.set_xlabel('Feature 1')
+ax.set_ylabel('Feature 2')
+ax.set_zlabel('Feature 3')
+plt.show()
+
+# get mean of the data
+mean = np.mean(X, axis=0)
+
+# centering the data by subtracting the mean
+X_centered = X - mean
+
+# the covariance matrix of the centered data
+covariance_matrix = np.cov(X_centered.T)
+
+# eigenvalues and eigenvectors of the covariance matrix
+eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+# sort the eigenvectors in descending order of their corresponding eigenvalues
+eigenvectors_sorted = eigenvectors[:, np.argsort(eigenvalues)[::-1]]
+
+# choose the top k eigenvectors based on the desired number of components
+k = 2
+top_k_eigenvectors = eigenvectors_sorted[:, :k]
+
+# transform the centered data using the top k eigenvectors
+X_transformed = np.dot(X_centered, top_k_eigenvectors)
+
+# total variance in the original data
+total_variance = np.sum(np.var(X, axis=0))
+
+# variance retained by the top k principal components
+variance_retained = np.sum(np.var(X_transformed, axis=0))
+
+# percentage of variance retained
+percentage_retained = (variance_retained / total_variance) * 100
+
+print(f'Percentage of variance retained: {percentage_retained:.2f}%')
+
+# plot the transformed data
+plt.scatter(X_transformed[:, 0], X_transformed[:, 1], c='#642d8a')
+plt.title('Transformed Data')
+plt.xlabel('PC 1')
+plt.ylabel('PC 2')
+plt.show()
+
+------------------------------------------------------------------------------
+Pract 8
+------------------------------------------------------------------------------
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Return the (g,h) index of the BMU in the grid
+def find_BMU(SOM,x):
+    distSq = (np.square(SOM - x)).sum(axis=2)
+    return np.unravel_index(np.argmin(distSq, axis=None), distSq.shape)
+
+# Update the weights of the SOM cells when given a single training example
+# and the model parameters along with BMU coordinates as a tuple
+def update_weights(SOM, train_ex, learn_rate, radius_sq, 
+                   BMU_coord, step=3):
+    g, h = BMU_coord
+    #if radius is close to zero then only BMU is changed
+    if radius_sq < 1e-3:
+        SOM[g,h,:] += learn_rate * (train_ex - SOM[g,h,:])
+        return SOM
+    # Change all cells in a small neighborhood of BMU
+    for i in range(max(0, g-step), min(SOM.shape[0], g+step)):
+        for j in range(max(0, h-step), min(SOM.shape[1], h+step)):
+            dist_sq = np.square(i - g) + np.square(j - h)
+            dist_func = np.exp(-dist_sq / 2 / radius_sq)
+            SOM[i,j,:] += learn_rate * dist_func * (train_ex - SOM[i,j,:])   
+    return SOM
+
+# Main routine for training an SOM. It requires an initialized SOM grid
+# or a partially trained grid as parameter
+def train_SOM(SOM, train_data, learn_rate = .1, radius_sq = 1, 
+             lr_decay = .1, radius_decay = .1, epochs = 10):    
+    learn_rate_0 = learn_rate
+    radius_0 = radius_sq
+    for epoch in np.arange(0, epochs):
+        rand.shuffle(train_data)      
+        for train_ex in train_data:
+            g, h = find_BMU(SOM, train_ex)
+            SOM = update_weights(SOM, train_ex, 
+                                 learn_rate, radius_sq, (g,h))
+        # Update learning rate and radius
+        learn_rate = learn_rate_0 * np.exp(-epoch * lr_decay)
+        radius_sq = radius_0 * np.exp(-epoch * radius_decay)            
+    return SOM
+
+# Dimensions of the SOM grid
+m = 10
+n = 10
+# Number of training examples
+n_x = 3000
+rand = np.random.RandomState(0)
+# Initialize the training data
+train_data = rand.randint(0, 255, (n_x, 3))
+# Initialize the SOM randomly
+SOM = rand.randint(0, 255, (m, n, 3)).astype(float)
+# Display both the training matrix and the SOM grid
+fig, ax = plt.subplots(
+    nrows=1, ncols=2, figsize=(12, 3.5), 
+    subplot_kw=dict(xticks=[], yticks=[]))
+ax[0].imshow(train_data.reshape(50, 60, 3))
+ax[0].title.set_text('Training Data')
+ax[1].imshow(SOM.astype(int))
+ax[1].title.set_text('Randomly Initialized SOM Grid')
+ 
+fig, ax = plt.subplots(
+    nrows=4, ncols=4, figsize=(20, 20), 
+    subplot_kw=dict(xticks=[], yticks=[]))
+total_epochs = 0
+
+# for learning rate .1
+for epochs, i in zip([1, 5, 30, 100], range(0,4)):
+    total_epochs += epochs
+    SOM = train_SOM(SOM, train_data, epochs=epochs)
+    ax[0][i].imshow(SOM.astype(int))
+    ax[0][i].title.set_text('Epochs = ' + str(total_epochs) + ", learning rate = 0.1")
+
+# for learning rate .01
+for epochs, i in zip([1, 5, 30, 100], range(0,4)):
+    total_epochs += epochs
+    SOM = train_SOM(SOM, train_data,learn_rate = 0.01, epochs=epochs)
+    ax[1][i].imshow(SOM.astype(int))
+    ax[1][i].title.set_text('Epochs = ' + str(total_epochs) + ", learning rate = 0.01")
+
+# for learning rate .001
+for epochs, i in zip([1, 5, 30, 100], range(0,4)):
+    total_epochs += epochs
+    SOM = train_SOM(SOM, train_data,learn_rate = 0.001, epochs=epochs)
+    ax[2][i].imshow(SOM.astype(int))
+    ax[2][i].title.set_text('Epochs = ' + str(total_epochs) + ", learning rate = 0.001")
+
+# for learning rate .99
+for epochs, i in zip([1, 5, 30, 100], range(0,4)):
+    total_epochs += epochs
+    SOM = train_SOM(SOM, train_data,learn_rate = 0.99, epochs=epochs)
+    ax[3][i].imshow(SOM.astype(int))
+    ax[3][i].title.set_text('Epochs = ' + str(total_epochs) + ", learning rate = 0.99")
+
+ 
+
+------------------------------------------------------------------------------
+Pract 9
+------------------------------------------------------------------------------
+
+def area_of_triangle(b,h):
+  area = 0.5 * b * h
+  return area
+
+def area_of_trapezoid(a, b, h):
+  area = 0.5 * (a + b) * h
+  return area
+
+def membership(x, l, c, r):
+  
+  if (l <= x) and (x < c):
+    num = x - l
+    den = c -l
+    ans = num / den
+    return ans
+  
+  elif (c < x) and (x <= r):
+    num = r - x
+    den = r - c
+    ans = num / den
+    return ans
+
+  elif x == c:
+    return 1
+
+  else:
+    return 0 
+
+def extent_of_firing(lst):
+  return min(lst)
+
+def Crisp(lst_z, lst_a, lst_c):
+  num_val = 0
+  den_val = 0
+
+  for i in range(len(lst_z)):
+    val = lst_z[i] * lst_a[i] * lst_c[i]
+    val2 = lst_z[i] * lst_a[i]
+
+    num_val += val
+    den_val += val2
+
+  ans = num_val / den_val
+  return ans
+
+def Centroid(inp_tab):
+  if len(inp_tab) == 3:
+    return inp_tab[1]
+  else:
+    ans = (inp_tab[0]+inp_tab[-1])/2
+    return ans
+
+"""# Given"""
+
+inp_tab = {
+    "T":{"L":[-5,10,25],"BA":[15,30,45],"A":[40,50,60],"AA":[55,70,85],"H":[75,90,105]},
+    "P":{"L":[0.25,1,1.75],"BA":[1.25,2.0,2.75],"A":[2,3,4],"AA":[3.25,4,4.75],"H":[4.25,5,5.75]},
+    "HP":{"L":[0.5,1,1.5],"ML":[1.25,2,2.75],"M":[2.5,3,3.75],"MH":[3.5,4,4.5],"H":[4.25,5,5.75]}
+}
+
+Rules = {
+    "R1": {
+        "T": "BA",
+        "P": "BA",
+        "HP": "MH"
+    },
+    "R2": {
+        "T": "L",
+        "P": "L",
+        "HP": "H"
+    }
+}
+
+inp_x = {
+    "T":22.5,
+    "P":1.5
+}
+
+"""# Calculating"""
+
+# Find HP based on given T and P
+T = 22.5
+P = 1.5
+
+# R1
+T1 = [15,30,45]
+P1 = [1.25,2.0,2.75]
+HP1 = [3.5,4,4.5]
+
+# R2
+T2 = [-5,10,25]
+P2 = [0.25,1,1.75]
+HP2 = [4.25,5,5.75]
+
+#Calculating area of triangle
+Area_of_Triangle1 = area_of_triangle(HP1[-1]-HP1[0],1)
+
+Area_of_Triangle2 = area_of_triangle(HP2[-1]-HP2[0],1)
+
+#Area
+A = []
+A.append(Area_of_Triangle1)
+A.append(Area_of_Triangle2)
+print("A: ",A)
+#Membership
+Membership = []
+# For R1
+mem = membership(T,T1[0],T1[1],T1[2])
+Membership.append(mem)
+mem = membership(P,P1[0],P1[1],P1[2])
+Membership.append(mem)
+#Extent of Firing for R1 (z1)
+Z1 = extent_of_firing(Membership)
+Membership = []
+# For R2
+mem = membership(T,T2[0],T2[1],T2[2])
+Membership.append(mem)
+mem = membership(P,P2[0],P2[1],P2[2])
+Membership.append(mem)
+#Extent of Firing for R2 (z2)
+Z2 = extent_of_firing(Membership)
+Z = []
+Z.append(Z1)
+Z.append(Z2)
+print("Z: ",Z)
+#Centroid
+C1 = Centroid(HP1)
+C2 = Centroid(HP2)
+C = []
+C.append(C1)
+C.append(C2)
+print("C: ",C)
+ 
+Crisp = Crisp(Z,A,C)
+print("Crsip Value of Heating Power (HP) at Temperature (T): 22.5 and Pressure (P): 1.5 is: ", Crisp)
+ 
+
+
+ 
+
+ 
+ 
